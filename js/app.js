@@ -135,99 +135,175 @@
   function initSnow() {
     const cv = $('#snow');
     const ctx = cv.getContext('2d');
-    let w, h, dpr, flakes = [], px = 0, tx = 0, running = true;
+    const bg = $('#bg');
+    let w, h, dpr, flakes = [], px = 0, tx = 0, ty = 0, py = 0;
+    let visible = true, gameOn = false, raf = 0, last = 0;
+    let shoot = null, nextShoot = 4 + Math.random() * 6;
+
+    // one soft flake sprite, drawn scaled: much cheaper than arcs every frame
+    const sprite = document.createElement('canvas');
+    sprite.width = sprite.height = 32;
+    const sg = sprite.getContext('2d');
+    const grad = sg.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(.45, 'rgba(255,255,255,.9)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    sg.fillStyle = grad;
+    sg.fillRect(0, 0, 32, 32);
 
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       w = innerWidth; h = innerHeight;
       cv.width = w * dpr; cv.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.round(Math.min(110, (w * h) / 9000));
+      const n = Math.round(Math.min(w < 640 ? 55 : 95, (w * h) / 9000));
       flakes = Array.from({ length: n }, () => makeFlake(true));
     }
     function makeFlake(anywhere) {
       const z = Math.random();
       return {
         x: Math.random() * w, y: anywhere ? Math.random() * h : -10,
-        r: .8 + z * 2.6, z, vy: .25 + z * .9, phase: Math.random() * 6.28, sway: .3 + Math.random() * .8,
+        s: 3 + z * 7, z, vy: 18 + z * 55, phase: Math.random() * 6.28, sway: .3 + Math.random() * .8,
       };
     }
-    function frame(t) {
-      if (!running) return;
-      px += (tx - px) * .04;
+    function frame(now) {
+      const dt = Math.min(.05, (now - (last || now)) / 1000);
+      last = now;
+      px += (tx - px) * Math.min(1, dt * 3);
+      py += (ty - py) * Math.min(1, dt * 3);
+      bg.style.transform = `translate3d(${px * -24}px, ${py * -16}px, 0)`;
       ctx.clearRect(0, 0, w, h);
       for (const f of flakes) {
-        f.y += f.vy;
-        f.x += Math.sin(t / 1600 + f.phase) * f.sway * .35;
+        f.y += f.vy * dt;
+        f.x += Math.sin(now / 1600 + f.phase) * f.sway * 20 * dt;
         if (f.y > h + 10) Object.assign(f, makeFlake(false));
-        const x = ((f.x + px * f.z * 30) % (w + 20) + w + 20) % (w + 20) - 10;
-        ctx.globalAlpha = .45 + f.z * .5;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(x, f.y, f.r, 0, 6.283);
-        ctx.fill();
+        const x = ((f.x + px * f.z * 40) % (w + 20) + w + 20) % (w + 20) - 10;
+        ctx.globalAlpha = .5 + f.z * .5;
+        ctx.drawImage(sprite, x - f.s / 2, f.y - f.s / 2, f.s, f.s);
       }
-      requestAnimationFrame(frame);
+      // the odd shooting star
+      nextShoot -= dt;
+      if (!shoot && nextShoot <= 0) {
+        shoot = { x: w * (.2 + Math.random() * .7), y: h * Math.random() * .3, life: 0 };
+        nextShoot = 9 + Math.random() * 10;
+      }
+      if (shoot) {
+        shoot.life += dt / .9;
+        const p = shoot.life, len = 90;
+        const hx = shoot.x - p * 260, hy = shoot.y + p * 130;
+        const g = ctx.createLinearGradient(hx, hy, hx + len, hy - len / 2);
+        g.addColorStop(0, 'rgba(255,255,255,.95)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.globalAlpha = Math.sin(Math.min(1, p) * Math.PI);
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + len, hy - len / 2); ctx.stroke();
+        if (p >= 1) shoot = null;
+      }
+      ctx.globalAlpha = 1;
+      raf = requestAnimationFrame(frame);
+    }
+    function sync() {
+      const should = visible && !gameOn && !REDUCED;
+      if (should && !raf) { last = 0; raf = requestAnimationFrame(frame); }
+      if (!should && raf) { cancelAnimationFrame(raf); raf = 0; }
     }
     addEventListener('resize', resize);
-    addEventListener('pointermove', (e) => { tx = e.clientX / w - .5; }, { passive: true });
-    addEventListener('deviceorientation', (e) => { if (e.gamma != null) tx = Math.max(-1, Math.min(1, e.gamma / 45)) * .5; }, { passive: true });
-    document.addEventListener('visibilitychange', () => {
-      running = !document.hidden;
-      if (running) requestAnimationFrame(frame);
-    });
+    addEventListener('pointermove', (e) => { tx = e.clientX / w - .5; ty = e.clientY / h - .5; }, { passive: true });
+    addEventListener('deviceorientation', (e) => {
+      if (e.gamma != null) tx = Math.max(-1, Math.min(1, e.gamma / 40)) * .5;
+      if (e.beta != null) ty = Math.max(-1, Math.min(1, (e.beta - 45) / 40)) * .5;
+    }, { passive: true });
+    document.addEventListener('visibilitychange', () => { visible = !document.hidden; sync(); });
+    document.addEventListener('adv:game', (e) => { gameOn = e.detail; sync(); });
     resize();
-    if (!REDUCED) requestAnimationFrame(frame);
+    sync();
   }
 
-  /* ---------- Confetti ---------- */
+  /* ---------- Confetti & sparkles ---------- */
 
-  const confetti = (() => {
+  const fx = (() => {
     const cv = $('#confetti');
     const ctx = cv.getContext('2d');
     const colors = ['#E2B3A8', '#AFC8AA', '#B0C6DF', '#E2CD99', '#C4B6DD', '#C8A26A', '#ffffff'];
-    let parts = [], raf = 0;
+    let parts = [], raf = 0, last = 0;
 
     function size() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    function tick() {
+    function star(r) {
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const rad = i % 2 ? r * .35 : r;
+        const a = i * Math.PI / 4;
+        ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    // time-based so it runs at the same speed on 60 Hz and 120 Hz screens
+    function tick(now) {
+      const k = Math.min(3, (now - (last || now)) / 16.67);
+      last = now;
       ctx.clearRect(0, 0, innerWidth, innerHeight);
       parts = parts.filter((p) => p.life > 0);
       for (const p of parts) {
-        p.vy += .18; p.vx *= .985; p.vy *= .985;
-        p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 1;
+        if (p.spark) { p.vx *= Math.pow(.9, k); p.vy *= Math.pow(.9, k); }
+        else { p.vy += .18 * k; p.vx *= Math.pow(.985, k); p.vy *= Math.pow(.985, k); }
+        p.x += p.vx * k; p.y += p.vy * k; p.rot += p.vr * k; p.life -= k;
         ctx.save();
-        ctx.globalAlpha = Math.min(1, p.life / 40);
+        ctx.globalAlpha = Math.min(1, p.life / (p.spark ? 14 : 40));
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
         ctx.fillStyle = p.c;
-        if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, 6.283); ctx.fill(); }
+        if (p.spark) star(p.s * Math.min(1, p.life / 20));
+        else if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, 6.283); ctx.fill(); }
         else ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2 * Math.abs(Math.cos(p.rot * 2)) + 1);
         ctx.restore();
       }
-      raf = parts.length ? requestAnimationFrame(tick) : 0;
+      if (parts.length) raf = requestAnimationFrame(tick);
+      else { raf = 0; last = 0; }
     }
+    const run = () => { if (!raf) raf = requestAnimationFrame(tick); };
     addEventListener('resize', size);
     size();
 
-    return function burst(x = innerWidth / 2, y = innerHeight / 2, n = 90) {
-      if (REDUCED) return;
-      for (let i = 0; i < n; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const v = 4 + Math.random() * 9;
-        parts.push({
-          x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6,
-          s: 6 + Math.random() * 7, rot: Math.random() * 6, vr: (Math.random() - .5) * .3,
-          c: colors[(Math.random() * colors.length) | 0], round: Math.random() < .3,
-          life: 90 + Math.random() * 60,
-        });
-      }
-      if (!raf) raf = requestAnimationFrame(tick);
+    return {
+      confetti(x = innerWidth / 2, y = innerHeight / 2, n = 90) {
+        if (REDUCED) return;
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const v = 4 + Math.random() * 9;
+          parts.push({
+            x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6,
+            s: 6 + Math.random() * 7, rot: Math.random() * 6, vr: (Math.random() - .5) * .3,
+            c: colors[(Math.random() * colors.length) | 0], round: Math.random() < .3,
+            life: 90 + Math.random() * 60,
+          });
+        }
+        run();
+      },
+      sparkle(x, y, n = 7) {
+        if (REDUCED) return;
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const v = 1.5 + Math.random() * 3.5;
+          parts.push({
+            x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, spark: true,
+            s: 3 + Math.random() * 4, rot: Math.random() * 3, vr: (Math.random() - .5) * .2,
+            c: Math.random() < .5 ? '#ffffff' : colors[(Math.random() * 6) | 0],
+            life: 26 + Math.random() * 16,
+          });
+        }
+        run();
+      },
     };
   })();
+  const confetti = fx.confetti;
+  window.ADV_FX = fx;
 
   /* ---------- Toast ---------- */
 
@@ -248,7 +324,7 @@
   function buildGrid() {
     grid.innerHTML = ORDER.map((day, i) => {
       const [c, c2] = PALETTE[(day * 5 + i) % PALETTE.length];
-      return `<button class="door ${SHAPES[day] || ''}" data-day="${day}" style="--c:${c};--c2:${c2};--i:${i}" aria-label="Día ${day}">
+      return `<button class="door intro ${SHAPES[day] || ''}" data-day="${day}" style="--c:${c};--c2:${c2};--i:${i}" aria-label="Día ${day}">
         <span class="door-inside"></span>
         <span class="door-front">
           <span class="num">${day}</span>
@@ -259,9 +335,37 @@
     }).join('');
     grid.querySelectorAll('.door').forEach((el) => { doors[el.dataset.day] = el; });
     grid.addEventListener('click', onDoorClick);
+    // the entrance animation runs once; dropping the class keeps later animations from replaying it
+    grid.addEventListener('animationend', (e) => {
+      if (e.animationName === 'doorIn') e.target.classList.remove('intro');
+    });
+    initTilt();
+  }
+
+  // 3D tilt that follows the cursor (mouse/trackpad only)
+  function initTilt() {
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches || REDUCED) return;
+    let active = null;
+    grid.addEventListener('pointermove', (e) => {
+      const el = e.target.closest('.door');
+      if (active && active !== el) { active.style.removeProperty('--rx'); active.style.removeProperty('--ry'); }
+      active = el;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      el.style.setProperty('--rx', `${(-y * 10).toFixed(2)}deg`);
+      el.style.setProperty('--ry', `${(x * 12).toFixed(2)}deg`);
+      el.style.setProperty('--mx', `${((x + .5) * 100).toFixed(1)}%`);
+      el.style.setProperty('--my', `${((y + .5) * 100).toFixed(1)}%`);
+    });
+    grid.addEventListener('pointerleave', () => {
+      if (active) { active.style.removeProperty('--rx'); active.style.removeProperty('--ry'); active = null; }
+    });
   }
 
   let unlocked = 0;
+  let booted = false;
 
   // Only unlocked days ever get their content into the page
   function fillInside(day) {
@@ -276,6 +380,10 @@
     for (let day = 1; day <= TOTAL; day++) {
       const el = doors[day];
       if (opened.has(day)) fillInside(day);
+      if (opened.has(day) && !el.classList.contains('opened') && booted) {
+        el.classList.add('just-opened');
+        setTimeout(() => el.classList.remove('just-opened'), 900);
+      }
       el.classList.toggle('locked', day > unlocked);
       el.classList.toggle('opened', opened.has(day));
       el.classList.toggle('today', day === unlocked && !opened.has(day) && !PREVIEW);
@@ -348,6 +456,7 @@
     await wait(450);
     sheet.hidden = true;
     body.innerHTML = '';
+    card.style.transform = '';
     if (day && opened.has(day)) {
       const el = doors[day];
       if (!el.classList.contains('opened')) {
@@ -359,6 +468,30 @@
     }
   }
   sheet.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeSheet(); });
+
+  // Swipe the card down to close it (touch only, and not while scratching/holding/shaking)
+  const card = $('.sheet-card', sheet);
+  (() => {
+    let startY = null, dy = 0, startT = 0;
+    card.addEventListener('touchstart', (e) => {
+      if (card.scrollTop > 0 || e.target.closest('canvas, .hold-btn, .globe, .quiz-opts')) return;
+      startY = e.touches[0].clientY; dy = 0; startT = Date.now();
+    }, { passive: true });
+    card.addEventListener('touchmove', (e) => {
+      if (startY == null) return;
+      dy = Math.max(0, e.touches[0].clientY - startY);
+      card.style.transition = 'none';
+      card.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    card.addEventListener('touchend', () => {
+      if (startY == null) return;
+      startY = null;
+      card.style.transition = '';
+      const fast = dy > 40 && Date.now() - startT < 250;
+      if (dy > 120 || fast) { card.style.transform = 'translateY(110%)'; closeSheet(); }
+      else card.style.transform = '';
+    });
+  })();
   addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
   function revealHTML(day, d) {
@@ -477,7 +610,7 @@
     const rect = cv.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = rect.width * dpr; cv.height = rect.height * dpr;
-    const ctx = cv.getContext('2d');
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
     ctx.scale(dpr, dpr);
 
     // pastel foil with sparkles
@@ -519,6 +652,7 @@
       ctx.lineTo(p.x + .01, p.y);
       ctx.stroke();
       last = p;
+      if (moves % 3 === 0) fx.sparkle(e.clientX, e.clientY, 2);
       if (++moves % 12 === 0) {
         vibrate(4);
         if (cleared() > .5) {
@@ -552,6 +686,10 @@
       ring.style.strokeDashoffset = 308 * (1 - progress);
       gift.classList.toggle('wobble', progress > 0);
       gift.classList.toggle('fast', progress > .6);
+      if (pressing && Math.random() < .25 + progress * .5) {
+        const r = gift.getBoundingClientRect();
+        fx.sparkle(r.left + Math.random() * r.width, r.top + Math.random() * r.height, 1);
+      }
       if (progress >= 1 && !finished) {
         finished = true;
         gift.classList.remove('wobble', 'fast');
@@ -595,6 +733,8 @@
       void globe.offsetWidth;
       globe.classList.add('shook', 'swirl');
       vibrate(25);
+      const r = globe.getBoundingClientRect();
+      fx.sparkle(r.left + r.width / 2, r.top + r.width / 2, 6);
       if (count >= NEEDED) {
         finished = true;
         setTimeout(done, 1300);
@@ -720,6 +860,19 @@
 
   function showApp() {
     $('#app').hidden = false;
+    // name in the title drops in letter by letter
+    const em = $('h1 em');
+    em.innerHTML = [...C.nombre].map((ch, i) => `<span class="ltr" style="--d:${i}">${esc(ch)}</span>`).join('');
+    em.setAttribute('aria-label', C.nombre);
+    // sections below the grid fade up when they scroll into view
+    const io = 'IntersectionObserver' in window && new IntersectionObserver((entries) => {
+      for (const en of entries) if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    }, { threshold: .15 });
+    document.querySelectorAll('.on-scroll').forEach((el) => (io ? io.observe(el) : el.classList.add('in')));
+    // a little sparkle wherever she taps
+    $('#app').addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.target.closest('.door, .btn')) fx.sparkle(e.clientX, e.clientY, 6);
+    });
     if (unlocked >= 1 && !opened.has(unlocked) && !PREVIEW) {
       setTimeout(() => doors[unlocked].scrollIntoView({ behavior: 'smooth', block: 'center' }), 1200);
     }
@@ -751,6 +904,7 @@
     await syncTime();
     refreshDoors();
     updateStatus();
+    booted = true;
     let startMusic = null;
     initIntro(() => startMusic && startMusic());
     initMusic().then((fn) => { startMusic = fn; });
