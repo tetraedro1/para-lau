@@ -28,9 +28,9 @@
     { id: 'esquiva', titulo: 'Esquiva', desc: 'Arrastra la estrella y esquiva las bolas de nieve todo el tiempo que puedas.', meta: 40 },
     { id: 'fusion', titulo: '2048 navideño', desc: 'Desliza para juntar adornos iguales. Llega lo más alto posible.', meta: 4000 },
     { id: 'serpiente', titulo: 'Serpiente de luces', desc: 'Desliza para girar. Come estrellas y no choques contigo ni con los bordes.', meta: 28 },
-    { id: 'ritmo', titulo: 'Ritmo', desc: 'Toca cada carril justo cuando la nota llega a la línea.', meta: 160 },
+    { id: 'ritmo', titulo: 'Ritmo', desc: 'Toca cada carril justo cuando la nota llega al círculo. Ocho fallos y se acaba.', meta: 200 },
     { id: 'laberinto', titulo: 'Laberinto', desc: 'Inclina el móvil (o desliza) para llevar la bola a la salida. ¿Cuántos haces en 60 segundos?', meta: 5 },
-    { id: 'puzle', titulo: 'Puzle deslizante', desc: 'Ordena las piezas del 1 al 15 moviéndolas al hueco. Te quedan puntos según el tiempo que sobre.', meta: 60 },
+    { id: 'puzle', titulo: 'Puzle deslizante', desc: 'Ordena las piezas del 1 al 8 tocando las que están junto al hueco. Puntos = segundos que te sobren de 120.', meta: 60 },
     { id: 'adornos', titulo: 'Rompe adornos', desc: 'Mueve la barra y rompe todos los adornos con la bola sin dejarla caer.', meta: 45 },
     { id: 'encesta', titulo: 'Encesta', desc: 'Lanza los regalos a la chimenea deslizando hacia arriba. Ojo con el viento.', meta: 12 },
     { id: 'sopa', titulo: 'Sopa de letras', desc: 'Encuentra las palabras navideñas arrastrando sobre las letras.', meta: 700 },
@@ -408,7 +408,7 @@
   /* ---------- Arcade card: random pick + medals ---------- */
 
   // games whose file exists; the rest still show as medals
-  const LISTOS = new Set(['atrapa', 'reno', 'parejas', 'campanas', 'torre', 'reflejos']);
+  const LISTOS = new Set(['atrapa', 'reno', 'parejas', 'campanas', 'torre', 'reflejos', 'duendes', 'esquiva', 'fusion', 'serpiente', 'ritmo', 'laberinto', 'puzle', 'adornos', 'encesta']);
   function pickRandom() {
     const pool = LISTA.filter((g) => LISTOS.has(g.id) && g.id !== state.ultimo);
     const g = pool[(Math.random() * pool.length) | 0];
