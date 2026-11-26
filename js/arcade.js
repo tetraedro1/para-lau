@@ -40,6 +40,31 @@
     { id: 'pinguino', titulo: 'Pingüino saltarín', desc: 'Inclina el móvil o toca a los lados para llevar al pingüino cada vez más alto.', meta: 250 },
   ];
   const BY_ID = Object.fromEntries(LISTA.map((g) => [g.id, g]));
+  // thumbnails, viewBox 0 0 48 48: [background, svg content]
+  const MINI = {
+    atrapa: ['#DCE5F1', '<rect x="9" y="33" width="30" height="7" rx="3.5" fill="#E2B3A8"/><path d="M10 42h26q5 0 4-5" stroke="#C8A26A" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="18" y="10" width="11" height="9" rx="2" fill="#B0C6DF"/><rect x="22.5" y="10" width="2" height="9" fill="#E2B3A8"/><circle cx="34" cy="20" r="3.5" fill="#F0CC6A"/><path d="M12 15l1.5 3 3.3.4-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.4z" fill="#EBCB86"/>'],
+    reno: ['#E6EBF4', '<rect x="32" y="0" width="10" height="14" fill="#D6E2EF"/><rect x="31" y="30" width="12" height="18" fill="#E2B3A8"/><rect x="29" y="28" width="16" height="4" rx="2" fill="#D99A90"/><circle cx="17" cy="23" r="8" fill="#B98B68"/><circle cx="23.5" cy="24" r="2.2" fill="#E26D6D"/><path d="M14 16l-2-5M17 15l1-5" stroke="#8C6A50" stroke-width="1.8" stroke-linecap="round"/><circle cx="19" cy="21" r="1.2" fill="#3D3848"/>'],
+    parejas: ['#F6E3DC', '<rect x="7" y="9" width="15" height="18" rx="3" fill="#fff"/><rect x="26" y="9" width="15" height="18" rx="3" fill="#fff"/><path d="M14.5 21s-4-2.5-4-5.3a2.2 2.2 0 0 1 4-1.3 2.2 2.2 0 0 1 4 1.3c0 2.8-4 5.3-4 5.3z" fill="#E3A0A0"/><path d="M33.5 21s-4-2.5-4-5.3a2.2 2.2 0 0 1 4-1.3 2.2 2.2 0 0 1 4 1.3c0 2.8-4 5.3-4 5.3z" fill="#E3A0A0"/><rect x="7" y="30" width="15" height="10" rx="3" fill="#F2D4CC"/><rect x="26" y="30" width="15" height="10" rx="3" fill="#E2DAEE"/>'],
+    campanas: ['#F3E6C4', '<circle cx="16" cy="16" r="8" fill="#E2B3A8"/><circle cx="32" cy="16" r="8" fill="#7FC27A"/><circle cx="16" cy="32" r="8" fill="#B0C6DF"/><circle cx="32" cy="32" r="8" fill="#EBCB86"/><path d="M28.5 19v-3a3.5 3.5 0 0 1 7 0v3l1 1.2h-9z" fill="#fff"/>'],
+    torre: ['#E4ECE6', '<rect x="10" y="36" width="28" height="7" rx="2" fill="#E2B3A8"/><rect x="12" y="29" width="25" height="7" rx="2" fill="#AFC8AA"/><rect x="14" y="22" width="21" height="7" rx="2" fill="#B0C6DF"/><rect x="15" y="15" width="18" height="7" rx="2" fill="#EBCB86"/><rect x="20" y="5" width="18" height="7" rx="2" fill="#C4B6DD"/>'],
+    reflejos: ['#EDE6F3', '<circle cx="24" cy="24" r="16" fill="#7FC27A" opacity=".3"/><circle cx="24" cy="24" r="12" fill="#7FC27A"/><path d="M26 15l-7 11h5l-2 8 7-11h-5z" fill="#fff"/>'],
+    duendes: ['#F2E6EE', '<ellipse cx="24" cy="38" rx="15" ry="5" fill="#C9B8D8"/><circle cx="24" cy="29" r="9" fill="#F5D7C4"/><path d="M15 27q9-20 19-11l-3 10z" fill="#8BA586"/><rect x="15" y="25" width="18" height="3" fill="#fff"/><circle cx="21" cy="30" r="1.2" fill="#3D3848"/><circle cx="27" cy="30" r="1.2" fill="#3D3848"/><ellipse cx="24" cy="39" rx="15" ry="3" fill="#fff"/>'],
+    esquiva: ['#E6EBF4', '<circle cx="12" cy="12" r="6" fill="#fff"/><circle cx="37" cy="16" r="8" fill="#fff"/><circle cx="35" cy="38" r="5" fill="#fff"/><path d="M20 22l2 4.2 4.6.5-3.4 3.2.9 4.5L20 32.2l-4.1 2.2.9-4.5-3.4-3.2 4.6-.5z" fill="#EBCB86" stroke="#D9B26C"/>'],
+    fusion: ['#E2DAEE', '<rect x="7" y="7" width="15" height="15" rx="3" fill="#F2D4CC"/><rect x="26" y="7" width="15" height="15" rx="3" fill="#AFC8AA"/><rect x="7" y="26" width="15" height="15" rx="3" fill="#C8A26A"/><rect x="26" y="26" width="15" height="15" rx="3" fill="#fff" opacity=".6"/><text x="14.5" y="18" font-size="8" text-anchor="middle" fill="#3D3848" font-family="sans-serif" font-weight="700">8</text><text x="14.5" y="36.5" font-size="6.5" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">2048</text>'],
+    serpiente: ['#E4ECE6', '<path d="M8 38h14V24h14" stroke="#7C9A78" stroke-width="1.5" fill="none"/><circle cx="8" cy="38" r="3.5" fill="#E2B3A8"/><circle cx="15" cy="38" r="3.5" fill="#EBCB86"/><circle cx="22" cy="38" r="3.5" fill="#AFC8AA"/><circle cx="22" cy="31" r="3.5" fill="#B0C6DF"/><circle cx="22" cy="24" r="3.5" fill="#C4B6DD"/><circle cx="29" cy="24" r="3.5" fill="#E3A0A0"/><circle cx="36" cy="24" r="4" fill="#E2B3A8"/><path d="M36 7l1.2 2.6 2.8.3-2 1.9.5 2.8-2.5-1.4-2.5 1.4.5-2.8-2-1.9 2.8-.3z" fill="#EBCB86"/>'],
+    ritmo: ['#F2E9F1', '<rect x="7" y="5" width="10" height="38" rx="4" fill="#fff" opacity=".7"/><rect x="19" y="5" width="10" height="38" rx="4" fill="#fff" opacity=".7"/><rect x="31" y="5" width="10" height="38" rx="4" fill="#fff" opacity=".7"/><circle cx="12" cy="14" r="4" fill="#E2B3A8"/><circle cx="24" cy="25" r="4" fill="#AFC8AA"/><circle cx="36" cy="36" r="4.5" fill="#B0C6DF"/><circle cx="12" cy="36" r="4.5" stroke="#E2B3A8" stroke-width="1.5" fill="none"/><circle cx="24" cy="36" r="4.5" stroke="#AFC8AA" stroke-width="1.5" fill="none"/>'],
+    laberinto: ['#F1ECF6', '<path d="M8 8h32v32H8zM8 18h12M28 8v12M16 26h16M20 26v14M32 30v10M28 20h12" stroke="#B9A7CF" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="13" cy="13" r="3" fill="#D99A90"/><rect x="33" y="33" width="5" height="5" rx="1" fill="#B0C6DF"/>'],
+    puzle: ['#EDE6F3', '<rect x="7" y="7" width="10" height="10" rx="2" fill="#F2D4CC"/><rect x="19" y="7" width="10" height="10" rx="2" fill="#D3E2D0"/><rect x="31" y="7" width="10" height="10" rx="2" fill="#D6E2EF"/><rect x="7" y="19" width="10" height="10" rx="2" fill="#F3E6C4"/><rect x="19" y="19" width="10" height="10" rx="2" fill="#E2DAEE"/><rect x="31" y="19" width="10" height="10" rx="2" fill="#F6DCE3"/><rect x="7" y="31" width="10" height="10" rx="2" fill="#E4ECE6"/><rect x="19" y="31" width="10" height="10" rx="2" fill="#EBCB86"/>'],
+    adornos: ['#E6EBF4', '<circle cx="12" cy="12" r="4.5" fill="#E2B3A8"/><circle cx="24" cy="12" r="4.5" fill="#EBCB86"/><circle cx="36" cy="12" r="4.5" fill="#AFC8AA"/><circle cx="18" cy="22" r="4.5" fill="#B0C6DF"/><circle cx="30" cy="22" r="4.5" fill="#C4B6DD"/><circle cx="26" cy="33" r="2.5" fill="#fff" stroke="#C9D4E3"/><rect x="15" y="39" width="18" height="3.5" rx="1.75" fill="#3D3848"/>'],
+    encesta: ['#E6EBF4', '<rect x="27" y="14" width="14" height="34" fill="#E2B3A8"/><rect x="25" y="11" width="18" height="5" rx="2" fill="#D99A90"/><path d="M10 40q6-30 22-28" stroke="#3D3848" stroke-width="1.3" stroke-dasharray="2 3" fill="none" opacity=".4"/><rect x="6" y="36" width="10" height="8" rx="2" fill="#AFC8AA"/><rect x="10" y="36" width="2" height="8" fill="#F2D4CC"/>'],
+    sopa: ['#FBF6EF', '<rect x="6" y="7" width="36" height="10" rx="5" fill="#C4B6DD" opacity=".45"/><g font-family="sans-serif" font-size="7.5" font-weight="600" fill="#3D3848" text-anchor="middle"><text x="12" y="14.5">N</text><text x="24" y="14.5">A</text><text x="36" y="14.5">V</text><text x="12" y="26.5">E</text><text x="24" y="26.5">R</text><text x="36" y="26.5">S</text><text x="12" y="38.5">L</text><text x="24" y="38.5">O</text><text x="36" y="38.5">Z</text></g>'],
+    trineo: ['#E6EBF4', '<rect x="0" y="36" width="48" height="12" fill="#fff"/><circle cx="36" cy="31" r="5" fill="#fff" stroke="#C9D4E3"/><circle cx="36" cy="22" r="3.5" fill="#fff" stroke="#C9D4E3"/><ellipse cx="14" cy="19" rx="6" ry="5" fill="#C29470"/><circle cx="14" cy="13" r="2.5" fill="#F2A65A"/><rect x="5" y="23" width="18" height="6" rx="3" fill="#E2B3A8"/><path d="M5 31h15q4 0 3-4" stroke="#C8A26A" stroke-width="1.6" fill="none" stroke-linecap="round"/>'],
+    pulso: ['#EDE6F3', '<path d="M18 0q-8 12 4 24t2 24h12q10-12-2-24T30 0z" fill="#fff"/><path d="M18 0q-8 12 4 24t2 24M30 0q-8 12 4 24t2 24" stroke="#C4B6DD" stroke-width="1.6" fill="none"/><g stroke="#7FA3CC" stroke-width="1.6" stroke-linecap="round"><path d="M28 30v-8M24.5 28l7-4M24.5 24l7 4"/></g>'],
+    ahorcado: ['#F6E3DC', '<circle cx="24" cy="34" r="9" fill="#fff" stroke="#C9D4E3"/><circle cx="24" cy="20" r="6" fill="#fff" stroke="#C9D4E3"/><path d="M18 12h12v-2c0-1-1-2-2-2h-1V4h-6v4h-1c-1 0-2 1-2 2z" fill="#3D3848"/><path d="M24 21l5 1-5 1z" fill="#F2A65A"/><rect x="18" y="25" width="12" height="3" fill="#E2B3A8"/><path d="M6 45h8M17 45h6M26 45h6M35 45h7" stroke="#C4B6DD" stroke-width="2" stroke-linecap="round"/>'],
+    pinguino: ['#E6EBF4', '<rect x="5" y="40" width="16" height="4" rx="2" fill="#fff"/><rect x="26" y="30" width="16" height="4" rx="2" fill="#B0C6DF"/><rect x="10" y="14" width="14" height="4" rx="2" fill="#fff"/><ellipse cx="33" cy="17" rx="6" ry="7.5" fill="#3D3848"/><ellipse cx="34" cy="18.5" rx="4" ry="5.2" fill="#fff"/><circle cx="35" cy="14" r="1" fill="#3D3848"/><path d="M37 15l3 1-3 1z" fill="#F2A65A"/><rect x="28" y="19" width="10" height="2" fill="#E26D6D"/>'],
+  };
+  const mini = (id, cls = 'mini') => `<svg class="${cls}" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="${MINI[id][0]}"/>${MINI[id][1]}</svg>`;
+
   const factories = {};
 
   const $ = (s) => document.querySelector(s);
@@ -246,6 +271,7 @@
     const rec = state.records[id] || 0;
     panel.innerHTML = `<div class="g-end g-intro">
       <p class="g-end-label">${state.superados.includes(id) ? 'Superado' : 'Reto'}</p>
+      ${mini(id, 'mini g-intro-mini')}
       <h3 class="g-intro-title">${esc(BY_ID[id].titulo)}</h3>
       <p class="g-intro-desc">${esc(BY_ID[id].desc)}</p>
       <p class="g-end-sub">Objetivo: <b>${meta}</b> · Tu récord: <b>${rec}</b></p>
@@ -408,7 +434,7 @@
   /* ---------- Arcade card: random pick + medals ---------- */
 
   // games whose file exists; the rest still show as medals
-  const LISTOS = new Set(['atrapa', 'reno', 'parejas', 'campanas', 'torre', 'reflejos', 'duendes', 'esquiva', 'fusion', 'serpiente', 'ritmo', 'laberinto', 'puzle', 'adornos', 'encesta']);
+  const LISTOS = new Set(LISTA.map((g) => g.id));
   function pickRandom() {
     const pool = LISTA.filter((g) => LISTOS.has(g.id) && g.id !== state.ultimo);
     const g = pool[(Math.random() * pool.length) | 0];
@@ -432,6 +458,7 @@
       }
     }
     nameBox.textContent = chosen.titulo;
+    $('#arc-mini').innerHTML = mini(chosen.id, 'mini big');
     nameBox.classList.remove('tick'); void nameBox.offsetWidth; nameBox.classList.add('tick', 'final');
     desc.textContent = chosen.desc;
     const rec = state.records[chosen.id] || 0;
@@ -446,7 +473,7 @@
     box.innerHTML = LISTA.map((g, i) => {
       const ok = state.superados.includes(g.id);
       const tried = state.records[g.id] != null;
-      return `<i class="${ok ? 'ok' : tried ? 'tried' : ''}" title="${ok || tried ? esc(g.titulo) : '?'}">${ok ? '★' : i + 1}</i>`;
+      return `<i class="${ok ? 'ok' : tried ? 'tried' : ''}" title="${esc(g.titulo)}">${mini(g.id)}${ok ? '<b>★</b>' : ''}</i>`;
     }).join('');
   }
 
