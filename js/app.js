@@ -57,8 +57,15 @@
     carta: '<path d="M3 6h18v12H3zM3 6l9 7 9-7"/>',
     billete: '<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM15 7v2M15 11v2M15 15v2"/>',
     plato: '<path d="M7 3v6.5a2 2 0 0 0 2 2V21M11 3v6.5a2 2 0 0 1-2 2M9 3v5M16.5 21V3C18.5 4 19.5 7 19.5 11h-3"/>',
+    onigiri: '<path d="M12 4c-2 0-8 9-8 12.5C4 19 6 20 12 20s8-1 8-3.5C20 13 14 4 12 4z"/><path d="M9 14.5h6V20H9z"/>',
+    sushi: '<ellipse cx="12" cy="8" rx="7" ry="3"/><path d="M5 8v8c0 1.7 3.1 3 7 3s7-1.3 7-3V8"/><ellipse cx="12" cy="8" rx="3" ry="1.2"/>',
+    dango: '<path d="M7 21l10-18"/><circle cx="9.6" cy="16.2" r="2.7"/><circle cx="12" cy="12" r="2.7"/><circle cx="14.4" cy="7.8" r="2.7"/>',
+    concha: '<path d="M12 20L4.5 12.5a7.5 7.5 0 0 1 15 0z"/><path d="M12 20l-4.2-9.5M12 20V8.5M12 20l4.2-9.5"/>',
+    lazo: '<path d="M12 12L5 7.5v9zM12 12l7-4.5v9z"/><circle cx="12" cy="12" r="1.8"/>',
+    trebol: '<circle cx="9.5" cy="9.5" r="2.7"/><circle cx="14.5" cy="9.5" r="2.7"/><circle cx="9.5" cy="14.5" r="2.7"/><circle cx="14.5" cy="14.5" r="2.7"/><path d="M14.5 16.5c1.8 1.6 2.5 3.4 2.5 5"/>',
+    capibara: '<path d="M4 15.5c0-4 3-7 8-7h3c3 0 5 2 5 5v1.5c0 2.2-2 4-5 4H8c-2.2 0-4-1.6-4-3.5z"/><circle cx="16.5" cy="12" r=".7"/><path d="M8 19v2M15 19v2M14 8.5l.8-1.8"/><circle cx="12" cy="5.5" r="1.8"/>',
   };
-  const ORN_ORDER = ['estrella', 'copo', 'arbol', 'luna', 'campana', 'corazon', 'regalo', 'vela'];
+  const ORN_ORDER = ['estrella', 'copo', 'onigiri', 'arbol', 'concha', 'campana', 'corazon', 'lazo', 'regalo', 'sushi', 'luna', 'dango'];
   const svg = (name, vb = '0 0 24 24') => `<svg viewBox="${vb}" aria-hidden="true">${ICONS[name] || ICONS.estrella}</svg>`;
   const LOCK_SVG = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const CLOCK_SVG = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
@@ -154,7 +161,7 @@
     const bg = $('#bg');
     let w, h, dpr, flakes = [], px = 0, tx = 0, ty = 0, py = 0;
     let visible = true, gameOn = false, raf = 0, last = 0;
-    let shoot = null, nextShoot = 4 + Math.random() * 6;
+    let shoot = null, nextShoot = 4 + Math.random() * 6, bubblesUntil = 0;
 
     // one soft flake sprite, drawn scaled: much cheaper than arcs every frame
     const sprite = document.createElement('canvas');
@@ -189,32 +196,44 @@
       py += (ty - py) * Math.min(1, dt * 3);
       bg.style.transform = `translate3d(${px * -24}px, ${py * -16}px, 0)`;
       ctx.clearRect(0, 0, w, h);
+      const bub = now < bubblesUntil;
+      if (bub) { ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.2; }
       for (const f of flakes) {
-        f.y += f.vy * dt;
+        // under the sea the snow turns into bubbles that rise
+        f.y += (bub ? -f.vy * 1.4 : f.vy) * dt;
         f.x += Math.sin(now / 1600 + f.phase) * f.sway * 20 * dt;
         if (f.y > h + 10) Object.assign(f, makeFlake(false));
+        if (f.y < -20) { Object.assign(f, makeFlake(false)); f.y = h + 10; }
         const x = ((f.x + px * f.z * 40) % (w + 20) + w + 20) % (w + 20) - 10;
         ctx.globalAlpha = .5 + f.z * .5;
-        ctx.drawImage(sprite, x - f.s / 2, f.y - f.s / 2, f.s, f.s);
+        if (bub) {
+          ctx.beginPath(); ctx.arc(x, f.y, f.s * .9, 0, 6.283); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(x - f.s * .3, f.y - f.s * .3, f.s * .18, 0, 6.283); ctx.fill();
+        } else ctx.drawImage(sprite, x - f.s / 2, f.y - f.s / 2, f.s, f.s);
       }
       // the odd shooting star
       nextShoot -= dt;
       if (!shoot && nextShoot <= 0) {
-        shoot = { x: w * (.2 + Math.random() * .7), y: h * Math.random() * .3, life: 0 };
+        shoot = { x: w * (.2 + Math.random() * .7), y: h * Math.random() * .3, life: 0, trio: Math.random() < .35 };
         nextShoot = 9 + Math.random() * 10;
       }
       if (shoot) {
         shoot.life += dt / .9;
         const p = shoot.life, len = 90;
         const hx = shoot.x - p * 260, hy = shoot.y + p * 130;
-        const g = ctx.createLinearGradient(hx, hy, hx + len, hy - len / 2);
-        g.addColorStop(0, 'rgba(255,255,255,.95)');
-        g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.globalAlpha = Math.sin(Math.min(1, p) * Math.PI);
-        ctx.strokeStyle = g;
-        ctx.lineWidth = 2;
         ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + len, hy - len / 2); ctx.stroke();
+        // sometimes three trails: pink, blue and green
+        const trails = shoot.trio ? [['242,150,190', -5], ['130,180,235', 0], ['140,205,140', 5]] : [['255,255,255', 0]];
+        for (const [rgb, off] of trails) {
+          const ox = off * .45, oy = off;
+          const g = ctx.createLinearGradient(hx + ox, hy + oy, hx + ox + len * 1.3, hy + oy - len * .65);
+          g.addColorStop(0, `rgba(${rgb},.95)`);
+          g.addColorStop(1, `rgba(${rgb},0)`);
+          ctx.strokeStyle = g;
+          ctx.lineWidth = shoot.trio ? 3 : 2;
+          ctx.beginPath(); ctx.moveTo(hx + ox, hy + oy); ctx.lineTo(hx + ox + len * (shoot.trio ? 1.3 : 1), hy + oy - len * (shoot.trio ? .65 : .5)); ctx.stroke();
+        }
         if (p >= 1) shoot = null;
       }
       ctx.globalAlpha = 1;
@@ -233,6 +252,7 @@
     }, { passive: true });
     document.addEventListener('visibilitychange', () => { visible = !document.hidden; sync(); });
     document.addEventListener('adv:game', (e) => { gameOn = e.detail; sync(); });
+    window.ADV_BUBBLES = (secs) => { bubblesUntil = performance.now() + secs * 1000; };
     resize();
     sync();
   }
@@ -288,7 +308,7 @@
     size();
 
     return {
-      confetti(x = innerWidth / 2, y = innerHeight / 2, n = 90) {
+      confetti(x = innerWidth / 2, y = innerHeight / 2, n = 90, pal = colors, round = .3) {
         if (REDUCED) return;
         for (let i = 0; i < n; i++) {
           const a = Math.random() * Math.PI * 2;
@@ -296,7 +316,7 @@
           parts.push({
             x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6,
             s: 6 + Math.random() * 7, rot: Math.random() * 6, vr: (Math.random() - .5) * .3,
-            c: colors[(Math.random() * colors.length) | 0], round: Math.random() < .3,
+            c: pal[(Math.random() * pal.length) | 0], round: Math.random() < round,
             life: 90 + Math.random() * 60,
           });
         }
@@ -458,6 +478,7 @@
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('show')));
   }
+  window.ADV_SHOW = (html) => { currentDay = null; showSheet(`<div class="fade-in">${html}</div>`); };
   function swapSheet(html) {
     body.innerHTML = html;
     $('.sheet-card', sheet).scrollTop = 0;

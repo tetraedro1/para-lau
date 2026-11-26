@@ -56,21 +56,27 @@
       <span class="fall f4"><svg viewBox="0 0 24 24"><path d="M4.5 11h15v9h-15zM3 7.5h18V11H3zM12 7.5V20M12 7.5C10.5 4.5 7 4 7 6s3 1.5 5 1.5zM12 7.5c1.5-3 5-3.5 5-1.5s-3 1.5-5 1.5z"/></svg></span>
       <span class="sled"></span>
     </div>
-    <p class="eyebrow">Un extra para ti</p>
-    <h2 class="game-title" id="game-title"></h2>
-    <p class="game-desc">Mueve el trineo y atrapa todos los regalos que puedas en 40 segundos. Las estrellas y los corazones valen más. Cuidado con el carbón.</p>
-    <p class="game-best">Tu récord: <b id="best">0</b></p>
-    <button class="btn" id="play" type="button">Jugar</button>
+    <p class="eyebrow">Recreativos</p>
+    <p class="arc-lead">Hoy te ha tocado</p>
+    <h2 class="game-title arc-name" id="arc-name">…</h2>
+    <p class="game-desc" id="arc-desc"></p>
+    <p class="game-best" id="arc-info"></p>
+    <button class="btn" id="play" type="button" disabled>Jugar</button>
+    <div class="arc-medals-wrap">
+      <p class="arc-progress"><span id="arc-progress"></span><span id="arc-final"></span></p>
+      <div class="arc-medals" id="arc-medals"></div>
+    </div>
   </section>
 
-  <footer class="foot on-scroll" id="firma"></footer>
+  <footer class="foot on-scroll"><span id="firma"></span></footer>
 </main>
 
 <div id="game" class="game" hidden>
   <canvas id="game-cv"></canvas>
+  <div class="g-layer" id="g-layer"></div>
   <div class="g-hud">
     <div class="g-score"><span id="g-score">0</span><em id="g-mult"></em></div>
-    <div class="g-time"><i id="g-bar"></i></div>
+    <div class="g-mid"><p class="g-name" id="g-name"></p><div class="g-time"><i id="g-bar"></i></div></div>
     <button id="g-close" class="g-close" type="button" aria-label="Salir del juego">
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
@@ -99,6 +105,7 @@
 
 <script src="js/contenido.js"></script>
 <script src="js/app.js"></script>
-<script src="js/juego.js"></script>
+<script src="js/personaje.js"></script>
+<script src="js/arcade.js"></script>
 </body>
 </html>
