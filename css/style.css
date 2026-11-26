@@ -20,6 +20,8 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* no swipe-to-go-back or pull-to-refresh hijacking the gestures */
+html, body { overscroll-behavior: none; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -30,7 +32,18 @@ body {
   background: var(--sky-1);
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  /* no iOS long-press magnifier, selection or image menus */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
+img, svg, canvas { -webkit-user-drag: none; -webkit-touch-callout: none; }
+
+/* the calendar is laid out under the intro so entering doesn't stutter */
+.app.waiting { visibility: hidden; }
+.app.waiting .door.intro,
+.app.waiting .top > *,
+.app.waiting h1 .ltr { animation-play-state: paused; }
 
 /* Fixed, composited background layer (cheaper than background-attachment: fixed) */
 .bg {
@@ -303,11 +316,18 @@ h1 em:hover .ltr { animation: letterWave .6s ease-in-out; animation-delay: calc(
   -webkit-user-select: none;
   touch-action: manipulation;
   outline: none;
-  transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform .5s var(--ease-out), scale .3s var(--ease-spring);
+  transition: scale .3s var(--ease-spring);
+}
+/* 3D tilt only with a mouse; preserve-3d keeps the hidden back face of the door really hidden */
+@media (hover: hover) and (pointer: fine) {
+  .door {
+    transform-style: preserve-3d;
+    transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform .5s var(--ease-out), scale .3s var(--ease-spring);
+  }
 }
 .door.intro { animation: doorIn .75s var(--ease-spring) both; animation-delay: calc(var(--i) * 30ms + .15s); }
-.door:active { scale: .95; transition-duration: .5s, .12s; }
+.door:active { scale: .95; }
 .door.big { grid-column: span 2; grid-row: span 2; }
 .door.wide { grid-column: span 2; }
 .door.tall { grid-row: span 2; }
@@ -442,7 +462,7 @@ h1 em:hover .ltr { animation: letterWave .6s ease-in-out; animation-delay: calc(
 
 .door.opening .door-front,
 .door.opened .door-front { transform: rotateY(-108deg); }
-.door.opened .door-front { opacity: 0; pointer-events: none; }
+.door.opened .door-front { opacity: 0; visibility: hidden; pointer-events: none; transition: transform .95s var(--ease-out), opacity .3s .6s, visibility 0s .9s; }
 .door.opened::before { display: none; }
 
 .door.shake { animation: shake .45s ease-in-out; }

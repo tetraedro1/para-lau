@@ -390,6 +390,7 @@
   /* ---------- Input ---------- */
 
   const setTarget = (e) => { targetX = e.clientX; };
+  if (window.ADV_LOCK_TOUCH) window.ADV_LOCK_TOUCH(cv);
   cv.addEventListener('pointerdown', setTarget);
   cv.addEventListener('pointermove', setTarget);
   addEventListener('keydown', (e) => {

@@ -24,6 +24,22 @@
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Stops the browser from treating a drag as "go back" / scroll / refresh
+  const lockTouch = (el) => {
+    const stop = (e) => { if (e.cancelable) e.preventDefault(); };
+    el.addEventListener('touchstart', stop, { passive: false });
+    el.addEventListener('touchmove', stop, { passive: false });
+  };
+  window.ADV_LOCK_TOUCH = lockTouch;
+  // The page never scrolls sideways, so a sideways swipe is never allowed to become "back"
+  (() => {
+    let sx = 0, sy = 0;
+    document.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      if (e.cancelable && Math.abs(t.clientX - sx) > Math.abs(t.clientY - sy)) e.preventDefault();
+    }, { passive: false });
+  })();
   const vibrate = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} };
 
   /* ---------- Icons ---------- */
@@ -663,6 +679,7 @@
       }
     }
     function up() { drawing = false; }
+    lockTouch(cv);
     cv.addEventListener('pointerdown', down);
     cv.addEventListener('pointermove', move);
     cv.addEventListener('pointerup', up);
@@ -709,6 +726,7 @@
       if (!raf) { lastT = 0; raf = requestAnimationFrame(loop); }
     }
     function stop() { pressing = false; btn.classList.remove('pressing'); }
+    lockTouch(btn);
     btn.addEventListener('pointerdown', start);
     btn.addEventListener('pointerup', stop);
     btn.addEventListener('pointerleave', stop);
@@ -813,6 +831,7 @@
     const btn = $('#music');
     const audio = $('#audio');
     const src = 'assets/musica.mp3';
+    if (!C.musica) return;
     try {
       const r = await fetch(src, { method: 'HEAD' });
       if (!r.ok) return;
@@ -859,11 +878,7 @@
   }
 
   function showApp() {
-    $('#app').hidden = false;
-    // name in the title drops in letter by letter
-    const em = $('h1 em');
-    em.innerHTML = [...C.nombre].map((ch, i) => `<span class="ltr" style="--d:${i}">${esc(ch)}</span>`).join('');
-    em.setAttribute('aria-label', C.nombre);
+    $('#app').classList.remove('waiting');
     // sections below the grid fade up when they scroll into view
     const io = 'IntersectionObserver' in window && new IntersectionObserver((entries) => {
       for (const en of entries) if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
@@ -897,6 +912,10 @@
     document.querySelectorAll('[data-nombre]').forEach((el) => { el.textContent = C.nombre; });
     $('#eyebrow').textContent = `Diciembre ${C.year}`;
     $('#firma').textContent = C.firma || '';
+    // name in the title drops in letter by letter
+    const em = $('h1 em');
+    em.innerHTML = [...C.nombre].map((ch, i) => `<span class="ltr" style="--d:${i}">${esc(ch)}</span>`).join('');
+    em.setAttribute('aria-label', C.nombre);
     initSnow();
     await checkPreview();
     opened = store.load();
