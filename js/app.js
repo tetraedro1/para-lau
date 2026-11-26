@@ -31,15 +31,6 @@
     el.addEventListener('touchmove', stop, { passive: false });
   };
   window.ADV_LOCK_TOUCH = lockTouch;
-  // The page never scrolls sideways, so a sideways swipe is never allowed to become "back"
-  (() => {
-    let sx = 0, sy = 0;
-    document.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-    document.addEventListener('touchmove', (e) => {
-      const t = e.touches[0];
-      if (e.cancelable && Math.abs(t.clientX - sx) > Math.abs(t.clientY - sy)) e.preventDefault();
-    }, { passive: false });
-  })();
   const vibrate = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} };
 
   /* ---------- Icons ---------- */
@@ -161,7 +152,7 @@
     const bg = $('#bg');
     let w, h, dpr, flakes = [], px = 0, tx = 0, ty = 0, py = 0;
     let visible = true, gameOn = false, raf = 0, last = 0;
-    let shoot = null, nextShoot = 4 + Math.random() * 6, bubblesUntil = 0;
+    let shoot = null, nextShoot = 4 + Math.random() * 6, bubblesUntil = 0, lastBx = 0, lastBy = 0;
 
     // one soft flake sprite, drawn scaled: much cheaper than arcs every frame
     const sprite = document.createElement('canvas');
@@ -175,7 +166,7 @@
     sg.fillRect(0, 0, 32, 32);
 
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      dpr = 1;
       w = innerWidth; h = innerHeight;
       cv.width = w * dpr; cv.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -194,7 +185,8 @@
       last = now;
       px += (tx - px) * Math.min(1, dt * 3);
       py += (ty - py) * Math.min(1, dt * 3);
-      bg.style.transform = `translate3d(${px * -24}px, ${py * -16}px, 0)`;
+      const bx = Math.round(px * -240) / 10, by = Math.round(py * -160) / 10;
+      if (bx !== lastBx || by !== lastBy) { lastBx = bx; lastBy = by; bg.style.transform = `translate3d(${bx}px, ${by}px, 0)`; }
       ctx.clearRect(0, 0, w, h);
       const bub = now < bubblesUntil;
       if (bub) { ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.2; }
@@ -266,7 +258,7 @@
     let parts = [], raf = 0, last = 0;
 
     function size() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
@@ -381,23 +373,31 @@
   // 3D tilt that follows the cursor (mouse/trackpad only)
   function initTilt() {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches || REDUCED) return;
-    let active = null;
-    grid.addEventListener('pointermove', (e) => {
-      const el = e.target.closest('.door');
-      if (active && active !== el) { active.style.removeProperty('--rx'); active.style.removeProperty('--ry'); }
+    let active = null, raf = 0, ev = null;
+    const release = (el) => {
+      el.style.removeProperty('--rx'); el.style.removeProperty('--ry');
+      clearTimeout(el._untilt);
+      el._untilt = setTimeout(() => el.classList.remove('tilt'), 500);
+    };
+    // pointermove can fire faster than the screen refreshes; apply once per frame
+    function apply() {
+      raf = 0;
+      const e = ev, el = e.target.closest && e.target.closest('.door');
+      if (active && active !== el) release(active);
       active = el;
       if (!el) return;
+      clearTimeout(el._untilt);
+      el.classList.add('tilt');
       const r = el.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - .5;
       const y = (e.clientY - r.top) / r.height - .5;
-      el.style.setProperty('--rx', `${(-y * 10).toFixed(2)}deg`);
-      el.style.setProperty('--ry', `${(x * 12).toFixed(2)}deg`);
-      el.style.setProperty('--mx', `${((x + .5) * 100).toFixed(1)}%`);
-      el.style.setProperty('--my', `${((y + .5) * 100).toFixed(1)}%`);
-    });
-    grid.addEventListener('pointerleave', () => {
-      if (active) { active.style.removeProperty('--rx'); active.style.removeProperty('--ry'); active = null; }
-    });
+      el.style.setProperty('--rx', `${(-y * 10).toFixed(1)}deg`);
+      el.style.setProperty('--ry', `${(x * 12).toFixed(1)}deg`);
+      el.style.setProperty('--mx', `${Math.round((x + .5) * 100)}%`);
+      el.style.setProperty('--my', `${Math.round((y + .5) * 100)}%`);
+    }
+    grid.addEventListener('pointermove', (e) => { ev = e; if (!raf) raf = requestAnimationFrame(apply); });
+    grid.addEventListener('pointerleave', () => { if (active) { release(active); active = null; } });
   }
 
   let unlocked = 0;
@@ -806,8 +806,9 @@
 
   const pad = (n) => String(n).padStart(2, '0');
 
+  let lastStatus = '';
   function updateStatus() {
-    const el = $('#status');
+    const el = { set innerHTML(v) { if (v !== lastStatus) { lastStatus = v; $('#status').innerHTML = v; } } };
     if (PREVIEW) {
       el.innerHTML = `Modo prueba · día <b>${unlocked}</b> desbloqueado`;
       return;

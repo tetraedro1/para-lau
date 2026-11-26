@@ -460,6 +460,11 @@
       if (en[0].isIntersecting && !rolled) { rolled = true; io.disconnect(); renderCard(true); loadGame(chosen.id).catch(() => {}); }
     }, { threshold: .4 });
     if (io) io.observe(card); else renderCard(false);
+    // pause the card's falling-icons loop while it's off screen
+    if ('IntersectionObserver' in window) {
+      card.classList.add('paused-off');
+      new IntersectionObserver((en) => card.classList.toggle('paused-off', !en[0].isIntersecting)).observe(card);
+    }
     $('#play').addEventListener('click', () => openGame(chosen.id));
     if (CFG.premioFinal) $('#arc-final').textContent = 'Supera los 20 y hay premio gordo';
   }

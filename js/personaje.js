@@ -24,6 +24,7 @@
   ];
 
   const CAPI_SVG = `<svg viewBox="0 0 120 104" aria-hidden="true">
+    <ellipse cx="60" cy="100" rx="50" ry="8" fill="rgba(61,56,72,.12)"/>
     <ellipse cx="60" cy="96" rx="48" ry="26" fill="#B4875F"/>
     <ellipse cx="33" cy="30" rx="8" ry="7" fill="#9E7350"/>
     <ellipse cx="87" cy="30" rx="8" ry="7" fill="#9E7350"/>

@@ -21,7 +21,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 /* no swipe-to-go-back or pull-to-refresh hijacking the gestures */
-html, body { overscroll-behavior: none; }
+html, body { overscroll-behavior: none; touch-action: pan-y; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -320,10 +320,11 @@ h1 em:hover .ltr { animation: letterWave .6s ease-in-out; animation-delay: calc(
 }
 /* 3D tilt only with a mouse; preserve-3d keeps the hidden back face of the door really hidden */
 @media (hover: hover) and (pointer: fine) {
-  .door {
+  .door { transition: transform .5s var(--ease-out), scale .3s var(--ease-spring); }
+  /* only the door under the cursor becomes a 3D layer */
+  .door.tilt {
     transform-style: preserve-3d;
     transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-    transition: transform .5s var(--ease-out), scale .3s var(--ease-spring);
   }
 }
 .door.intro { animation: doorIn .75s var(--ease-spring) both; animation-delay: calc(var(--i) * 30ms + .15s); }
@@ -487,9 +488,7 @@ h1 em:hover .ltr { animation: letterWave .6s ease-in-out; animation-delay: calc(
   transition: opacity .4s;
 }
 /* blur is costly on phones, keep it for desktop */
-@media (min-width: 640px) {
-  .sheet-backdrop { background: rgba(61, 56, 72, .3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-}
+
 .sheet.show .sheet-backdrop { opacity: 1; }
 
 .sheet-card {
@@ -499,6 +498,7 @@ h1 em:hover .ltr { animation: letterWave .6s ease-in-out; animation-delay: calc(
   max-height: 92dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
+  touch-action: pan-y; /* scroll containers don't inherit the body's touch-action */
   padding: 30px 22px calc(env(safe-area-inset-bottom) + 28px);
   border-radius: 28px 28px 0 0;
   background: var(--paper);
@@ -1189,10 +1189,12 @@ h1 em:hover .ltr { animation: letterWave .6s ease-in-out; animation-delay: calc(
   transition: transform .7s cubic-bezier(.34, 1.56, .64, 1);
   touch-action: manipulation;
 }
-.capi svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(61, 56, 72, .18)); }
+.capi { will-change: transform; }
+.capi svg { width: 100%; height: auto; display: block; }
 .capi.peek { transform: translateY(18%); }
 .capi.boing svg { animation: boing .5s cubic-bezier(.34, 1.56, .64, 1); }
-.capi .capi-eyes { animation: blink 4s infinite; transform-origin: 60px 50px; }
+.capi .capi-eyes { animation: blink 4s infinite paused; transform-origin: 60px 50px; }
+.capi.peek .capi-eyes { animation-play-state: running; }
 .capi-bubble {
   position: absolute;
   right: 40px;
@@ -1247,3 +1249,6 @@ h1 em.wiggle .ltr { animation: letterWave .45s ease-in-out; animation-delay: cal
 .g-rec-author { margin: 2px 0 0; font-size: 13px; color: var(--ink-soft); }
 .g-rec-note { margin: 6px 0 0; font-family: var(--hand); font-size: 19px; line-height: 1.1; color: var(--rose); }
 .g-rec-link { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; border-bottom: 1.5px solid var(--gold); }
+
+/* decorative loops stop while off screen */
+.paused-off .fall, .paused-off .sled { animation-play-state: paused; }
