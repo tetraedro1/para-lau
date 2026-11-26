@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EDEFF5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Adviento">
+<meta name="robots" content="noindex, nofollow">
+<title>El adviento de Lau</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<section id="intro" class="intro">
+  <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="Abrir la carta">
+    <div class="env-back"></div>
+    <div class="letter">
+      <p class="letter-to">Para <span data-nombre></span></p>
+      <p class="letter-msg" id="letter-msg"></p>
+      <button class="btn" id="enter" type="button">Abrir mi calendario</button>
+    </div>
+    <div class="env-front"></div>
+    <div class="env-flap"></div>
+    <div class="seal" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/></svg>
+    </div>
+  </div>
+  <p class="intro-hint">toca el sobre</p>
+</section>
+
+<main id="app" class="app" hidden>
+  <header class="top">
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1>El adviento de <em data-nombre></em></h1>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="progress" id="progress"></div>
+  </header>
+  <section class="grid" id="grid" aria-label="Puertas del calendario"></section>
+  <footer class="foot" id="firma"></footer>
+</main>
+
+<button id="music" class="music" type="button" hidden aria-label="Música">
+  <svg class="ic-on" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>
+  <svg class="ic-off" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M3 3l18 18"/></svg>
+</button>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-backdrop" data-close></div>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Puerta del calendario">
+    <button class="sheet-close" type="button" data-close aria-label="Cerrar">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<audio id="audio" loop preload="none"></audio>
+
+<script src="js/contenido.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
